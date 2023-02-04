@@ -1,23 +1,46 @@
 @extends('layouts.app')
 
+@section('javascript')
+<script src="/js/comfirm.js"></script>
+@endsection
+
+
 @section('content')
 <div class="card">
     <div class="card-header">
-        新規メモ作成
-        <form class="card-type" action="{{ route('destroy') }}" method="POST">
+        メモを編集
+        <form class="card-body" id="delete-form" action="{{ route('destroy') }}" method="POST">
             @csrf
-            <input type="hidden" name="memo_id" value="{{ $edit_memo['id'] }}" />
-            <button type="submit">削除</button>
+            <input type="hidden" name="memo_id" value="{{ $edit_memos[0]['id'] }}" />
+            <button type="submit" onclick="deleteHandle(event);">削除</button>
         </form>
     </div>
     <form class="card-body" action="{{ route('update') }}" method="POST">
         @csrf
-        <input type="hidden" name="memo_id" value="{{ $edit_memo['id'] }}" />
+        <input type="hidden" name="memo_id" value="{{ $edit_memos[0]['id'] }}" />
         <div class="form-group">
-            <textarea class="form-control" name="content" rows="3" placeholder="メモを入力">
-                {{ $edit_memo['content'] }}
-            </textarea>
+            <textarea class="form-control mb-3" name="content" rows="3" placeholder="メモを入力">{{ $edit_memos[0]['content'] }}</textarea>
         </div>
+        {{-- TODO: エラー用ビューのコンポーネント化 --}}
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+    @foreach($tags as $tag)
+        <div class="form-check form-check-inline mb-3">
+            <input class="form-check-input" type="checkbox" name="tags[]" id="{{ $tag['id'] }}" value="{{ $tag['id'] }}"\
+            {{ in_array($tag['id'], $include_tags) ? 'checked' : '' }}>
+            <label class="form-check-label" for="{{ $tag['id'] }}">
+                {{ $tag['name'] }}
+            </label>
+        </div>
+    @endforeach
+        <input type="text" class="form-control w-50 mb-3" name="new-tag" placeholder="新規タグを作成"> 
         <button type="submit" class="btn btn-primary">変更</button>
     </form>
 </div>

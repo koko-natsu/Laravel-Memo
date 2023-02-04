@@ -15,70 +15,91 @@ class HomeController extends Controller
      *
      * @return void
      */
+
     public function __construct()
     {
         $this->middleware('auth');
     }
-
+    
     /**
-     * Show the application dashboard.
+     * Show the application dashboard.a
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
     public function index()
     {
-        $memos = Memo::select('memos.*')
-            ->where('user_id', '=', \Auth::id())
-            ->whereNull('deleted_at')
-            ->orderBy('updated_at', 'DESC')
-            ->get();
-
-        return view('create', compact('memos'));
+        return view('create');
     }
 
 
     public function store(Request $request)
     {
         $posts = $request->all();
+        // TODO: エラー文の日本語化
+        $request->validate(['content' => 'required']);
+        
+        DB::transaction(function() use($posts) {
+            if (!empty($posts['content'])) 
+            {
+                $memo_id = Memo::insertGetId(['content' => $posts['content'], 
+                                              'user_id' => \Auth::id()]);
 
-        DB::transaction(function() use($posts){
-            $memo_id = Memo::insertGetId(['content' => $posts['content'], 
-                                          'user_id' => \Auth::id()]);
-            $tag_exists = Tag::where('user_id','=', \Auth::id())
-                                ->where('name', '=', $posts['new-tag'])
-                                ->exists();
-
-            if( !empty($posts['new-tag']) && !$tag_exists) {
-                $tag_id = Tag::insertGetId(['user_id' => \Auth::id(), 'name' => $posts['new-tag']]);
-                MemoTag::insert(['memo_id' => $memo_id, 'tag_id' => $tag_id]);
-            }
+                $tag_exists = Tag::where('user_id','=',  \Auth::id())
+                                    ->where('name', '=', $posts['new-tag'])
+                                    ->exists();
+    
+                if( (!empty($posts['new-tag']) || $posts['new-tag'] === '0') && !$tag_exists) {
+                    $tag_id = Tag::insertGetId(['user_id' => \Auth::id(), 'name' => $posts['new-tag']]);
+                    MemoTag::insert(['memo_id' => $memo_id, 'tag_id' => $tag_id]);
+                }
+    
+                if (!empty($posts['tags'])) {
+                    foreach($posts['tags'] as $tag) {
+                        MemoTag::insert(['memo_id' => $memo_id, 'tag_id' => $tag]);
+                    }
+                }
+            } 
         });
-
-
         return redirect( route('home') );
     }
 
 
     public function edit($id) 
     {
-        $memos = Memo::select('memos.*')
-            ->where('user_id', '=', \Auth::id())
-            ->whereNull('deleted_at')
-            ->orderBy('updated_at', 'DESC')
-            ->get();
+        $edit_memos = Memo::getEditMemo($id);
 
-        $edit_memo = Memo::find($id);
+        $include_tags = [];
+        foreach($edit_memos as $memo) {
+            array_push($include_tags, $memo['tag_id']);
+        }
 
-        return view('edit', compact('memos', 'edit_memo'));
+        return view('edit', compact('edit_memos', 'include_tags'));
     }
 
 
     public function update(Request $request)
     {
         $posts = $request->all();
+        $request->validate(['content' => 'required']);
 
-        Memo::where('id', $posts['memo_id'])->update(['content' => $posts['content']]);
+        DB::transaction(function () use($posts) {
+            Memo::where('id', $posts['memo_id'])->update(['content' => $posts['content']]);
+            
+            MemoTag::where('memo_id', '=', $posts['memo_id'])->delete();
 
+            foreach($posts['tags'] as $tag) {
+                MemoTag::insert(['memo_id' => $posts['memo_id'], 'tag_id' => $tag]);
+            }
+
+            $tag_exists = Tag::where('user_id','=',  \Auth::id())
+                ->where('name', '=', $posts['new-tag'])
+                ->exists();
+    
+            if( (!empty($posts['new-tag']) || $posts['new-tag'] === '0') && !$tag_exists) {
+                $tag_id = Tag::insertGetId(['user_id' => \Auth::id(), 'name' => $posts['new-tag']]);
+                MemoTag::insert(['memo_id' => $posts['memo_id'], 'tag_id' => $tag_id]);
+        }
+        });
         return redirect( route('home') );
     }
 
