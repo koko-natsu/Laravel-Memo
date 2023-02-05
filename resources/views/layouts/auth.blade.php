@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    @include('common.header')
+    @yield('common.head')
 </head>
 <body>
     <div id="app">

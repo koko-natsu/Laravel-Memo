@@ -1,22 +1,27 @@
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-
-@include('common.header')
-@yield('javascript')
+<head>
+    @include('common.head')
+    @yield('javascript')
+</head>
 
 <body>
     <div id="app">
        
         @include('common.nav-bar')
 
-        <main class="">
+        <main class="container">
             <div class="row">
 
-                @include('common.tag-bar')
+                <div class="col-md-2 p-1">
+                    @include('common.tag-bar')
+                </div>
                 
-                @include('common.memo-bar')
+                <div class="col-md-4 p-1">
+                    @include('common.memo-bar')
+                </div>
 
-                <div class="col-md-6 p-0">
+                <div class="col-md-6 p-1">
                     @yield('content')
                 </div>
             </div>

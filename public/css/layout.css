@@ -1,0 +1,9 @@
+.my-card-body {
+  height: calc( 100vh - (55px + 48px));
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
