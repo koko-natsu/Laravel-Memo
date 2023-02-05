@@ -21,16 +21,9 @@
         <div class="form-group">
             <textarea class="form-control mb-3" name="content" rows="3" placeholder="メモを入力">{{ $edit_memos[0]['content'] }}</textarea>
         </div>
-        {{-- TODO: エラー用ビューのコンポーネント化 --}}
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+
+        @include('common.errors')
+
     @foreach($tags as $tag)
         <div class="form-check form-check-inline mb-3">
             <input class="form-check-input" type="checkbox" name="tags[]" id="{{ $tag['id'] }}" value="{{ $tag['id'] }}"\
@@ -40,6 +33,7 @@
             </label>
         </div>
     @endforeach
+    
         <input type="text" class="form-control w-50 mb-3" name="new-tag" placeholder="新規タグを作成"> 
         <button type="submit" class="btn btn-primary">変更</button>
     </form>
